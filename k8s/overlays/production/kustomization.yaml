@@ -15,6 +15,9 @@ configMapGenerator:
 
 # Generate secrets from .env file (gitignored)
 # Copy secrets.env.example to secrets.env and fill in real values
+generatorOptions:
+  disableNameSuffixHash: true
+
 secretGenerator:
   - name: postgres-secret
     envs:
