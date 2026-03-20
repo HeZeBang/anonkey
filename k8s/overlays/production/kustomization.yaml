@@ -33,6 +33,12 @@ secretGenerator:
     options:
       labels:
         app: meilisearch
+  - name: misskey-secret
+    envs:
+      - secrets.env
+    options:
+      labels:
+        app: misskey
 
 # Override image tags for production
 images:

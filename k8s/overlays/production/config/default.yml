@@ -2,6 +2,14 @@
 # Misskey configuration (Kubernetes production)
 #━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+#   ┌────────────────────────┐
+#───┘ Initial Setup Password └────────────────────────────────
+
+# Password to initiate setting up admin account.
+# Only used during first setup, ignored afterwards.
+# Injected from Secret via init container.
+setupPassword: __SETUP_PASSWORD__
+
 #   ┌─────┐
 #───┘ URL └─────────────────────────────────────────────────────
 
@@ -24,8 +32,8 @@ db:
   port: 5432
   db: misskey
   user: misskey
-  # This value must match POSTGRES_PASSWORD in secrets.env
-  pass: REPLACE_ME
+  # Injected from Secret via init container
+  pass: __POSTGRES_PASSWORD__
 
 dbReplications: false
 
@@ -63,8 +71,8 @@ meilisearch:
   # k8s Service name for Meilisearch
   host: meilisearch
   port: 7700
-  # This value must match MEILI_MASTER_KEY in secrets.env
-  apiKey: 'REPLACE_ME'
+  # Injected from Secret via init container
+  apiKey: '__MEILI_MASTER_KEY__'
   ssl: false
   index: misskey_notes
   scope: local

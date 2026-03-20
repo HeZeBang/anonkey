@@ -40,6 +40,45 @@ spec:
                         - misskey
                 topologyKey: kubernetes.io/hostname
       initContainers:
+        # Inject secrets into the config template.
+        # ConfigMap (read-only) has __PLACEHOLDER__ tokens;
+        # this container reads the template + Secret env vars
+        # and writes the resolved config to an emptyDir volume.
+        - name: inject-secrets
+          image: busybox:1.37
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+            - name: MEILI_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: meilisearch-secret
+                  key: MEILI_MASTER_KEY
+            - name: SETUP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: misskey-secret
+                  key: SETUP_PASSWORD
+                  optional: true
+          command:
+            - sh
+            - -c
+            - |
+              sed \
+                -e "s|__POSTGRES_PASSWORD__|${POSTGRES_PASSWORD}|g" \
+                -e "s|__MEILI_MASTER_KEY__|${MEILI_MASTER_KEY}|g" \
+                -e "s|__SETUP_PASSWORD__|${SETUP_PASSWORD:-}|g" \
+                /config-template/default.yml > /config-out/default.yml
+              echo "Config injected."
+          volumeMounts:
+            - name: misskey-config-template
+              mountPath: /config-template
+              readOnly: true
+            - name: misskey-config
+              mountPath: /config-out
         - name: wait-for-postgres
           image: busybox:1.37
           command:
@@ -100,9 +139,11 @@ spec:
               memory: "2Gi"
               cpu: "2000m"
       volumes:
-        - name: misskey-config
+        - name: misskey-config-template
           configMap:
             name: misskey-config
+        - name: misskey-config
+          emptyDir: {}
         - name: misskey-files
           persistentVolumeClaim:
             claimName: misskey-files-pvc

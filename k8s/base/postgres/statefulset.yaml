@@ -18,6 +18,18 @@ spec:
         app: postgres
         app.kubernetes.io/component: database
     spec:
+      # NOTE on password management:
+      # POSTGRES_PASSWORD only takes effect on FIRST initialization
+      # (empty data directory). After that, changing the Secret does
+      # NOT update the database password.
+      #
+      # To rotate the password:
+      #   1. Update secrets.env with the new password
+      #   2. kubectl apply -k k8s/overlays/production
+      #   3. kubectl exec -n misskey postgres-0 -- \
+      #        psql -U misskey -d misskey -c \
+      #        "ALTER USER misskey PASSWORD 'new-password';"
+      #   4. kubectl rollout restart deployment/misskey -n misskey
       containers:
         - name: postgres
           image: postgres:18-alpine

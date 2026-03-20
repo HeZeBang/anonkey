@@ -53,13 +53,13 @@ cp secrets.env.example secrets.env
 # 编辑 secrets.env，填入真实的密码
 ```
 
+密码轮换步骤：改 secrets.env → apply → ALTER USER → 重启 Misskey
+
 ### 2. 修改配置
 
 编辑 `overlays/production/config/default.yml`：
 
 - `url` — 你的域名
-- `db.pass` — 与 `secrets.env` 中 `POSTGRES_PASSWORD` 一致
-- `meilisearch.apiKey` — 与 `secrets.env` 中 `MEILI_MASTER_KEY` 一致
 
 编辑 `overlays/production/kustomization.yaml`：
 
