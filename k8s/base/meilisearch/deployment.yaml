@@ -30,8 +30,10 @@ spec:
               value: "true"
             - name: MEILI_HTTP_ADDR
               value: "0.0.0.0:7700"
-            - name: MEILI_MAX_THREADS
+            - name: MEILI_MAX_INDEXING_THREADS
               value: "2"
+            - name: MEILI_MAX_INDEXING_MEMORY
+              value: "1GiB"
             - name: MEILI_MASTER_KEY
               valueFrom:
                 secretKeyRef:
@@ -49,13 +51,6 @@ spec:
               port: 7700
             initialDelaySeconds: 10
             periodSeconds: 5
-          resources:
-            requests:
-              memory: "1Gi"
-              cpu: "250m"
-            limits:
-              memory: "3Gi"
-              cpu: "1000m"
           volumeMounts:
             - name: meilisearch-data
               mountPath: /meili_data
