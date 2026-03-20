@@ -7,7 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  REGISTRY_IMAGE: ghcr.io/${{ github.repository }}
   TAGS: |
     type=edge
     type=ref,event=pr
@@ -35,6 +34,7 @@ jobs:
         run: |
           platform=${{ matrix.platform }}
           echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          echo "REGISTRY_IMAGE=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
       - name: Check out the repo
         uses: actions/checkout@v6.0.2
       - name: Set up Docker Buildx
@@ -84,6 +84,9 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Prepare
+        run: |
+          echo "REGISTRY_IMAGE=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
       - name: Download digests
         uses: actions/download-artifact@v7
         with:
