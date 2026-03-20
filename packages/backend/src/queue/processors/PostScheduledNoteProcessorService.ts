@@ -54,6 +54,7 @@ export class PostScheduledNoteProcessorService {
 				visibility: draft.visibility,
 				visibleUserIds: draft.visibleUserIds,
 				channelId: draft.channelId,
+				isAnonymous: false,
 			});
 
 			// await不要
