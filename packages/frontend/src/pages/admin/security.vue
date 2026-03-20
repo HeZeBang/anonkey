@@ -137,6 +137,24 @@ SPDX-License-Identifier: AGPL-3.0-only
 					</MkFolder>
 				</SearchMarker>
 
+				<SearchMarker v-slot="slotProps" :keywords="['allowed', 'email', 'regexp', 'whitelist']">
+					<MkFolder :defaultOpen="slotProps.isParentOfTarget">
+						<template #label><SearchLabel>Allowed Email Regexp</SearchLabel></template>
+						<template v-if="allowedEmailRegexpForm.modified.value" #footer>
+							<MkFormFooter :form="allowedEmailRegexpForm"/>
+						</template>
+
+						<div class="_gaps_m">
+							<SearchMarker>
+								<MkInput v-model="allowedEmailRegexpForm.state.allowedEmailRegexp">
+									<template #label><SearchLabel>Allowed Email Regexp</SearchLabel></template>
+									<template #caption>Only emails matching this regular expression will be allowed to register. Leave empty to allow all.</template>
+								</MkInput>
+							</SearchMarker>
+						</div>
+					</MkFolder>
+				</SearchMarker>
+
 				<SearchMarker v-slot="slotProps" :keywords="['log', 'ipAddress']">
 					<MkFolder :defaultOpen="slotProps.isParentOfTarget">
 						<template #label><SearchLabel>Log IP address</SearchLabel></template>
@@ -229,6 +247,15 @@ const emailValidationForm = useForm({
 		enableTruemailApi: state.enableTruemailApi,
 		truemailInstance: state.truemailInstance,
 		truemailAuthKey: state.truemailAuthKey,
+	});
+	fetchInstance(true);
+});
+
+const allowedEmailRegexpForm = useForm({
+	allowedEmailRegexp: meta.allowedEmailRegexp || '',
+}, async (state) => {
+	await os.apiWithDialog('admin/update-meta', {
+		allowedEmailRegexp: state.allowedEmailRegexp,
 	});
 	fetchInstance(true);
 });

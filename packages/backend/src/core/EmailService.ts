@@ -234,6 +234,20 @@ export class EmailService {
 			};
 		}
 
+		if (this.meta.allowedEmailRegexp && this.meta.allowedEmailRegexp.trim() !== '') {
+			try {
+				const regexp = new RegExp(this.meta.allowedEmailRegexp);
+				if (!regexp.test(emailAddress)) {
+					return {
+						available: false,
+						reason: 'format',
+					};
+				}
+			} catch {
+				// invalid regexp, skip this check
+			}
+		}
+
 		return {
 			available: true,
 			reason: null,

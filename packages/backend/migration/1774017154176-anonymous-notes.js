@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-export class AnonymousNotes1769000000000 {
-    name = 'AnonymousNotes1769000000000'
+export class AnonymousNotes1774017154176 {
+    name = 'AnonymousNotes1774017154176'
 
     async up(queryRunner) {
         await queryRunner.query(`ALTER TABLE "note" ADD "isAnonymous" boolean NOT NULL DEFAULT false`);
