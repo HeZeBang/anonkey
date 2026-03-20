@@ -1,0 +1,4 @@
+# Secret files - NEVER commit these
+secrets.env
+*.secret
+*.secret.yaml
