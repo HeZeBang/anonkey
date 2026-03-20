@@ -29,6 +29,8 @@ import { CustomEmojiService } from '@/core/CustomEmojiService.js';
 import { IdService } from '@/core/IdService.js';
 import { UtilityService } from '@/core/UtilityService.js';
 import { escapeHtml } from '@/misc/escape-html.js';
+import { SystemAccountService } from '@/core/SystemAccountService.js';
+import { AnonymousNoteService } from '@/core/AnonymousNoteService.js';
 import { JsonLdService } from './JsonLdService.js';
 import { ApMfmService } from './ApMfmService.js';
 import { CONTEXT } from './misc/contexts.js';
@@ -67,6 +69,8 @@ export class ApRendererService {
 		private mfmService: MfmService,
 		private idService: IdService,
 		private utilityService: UtilityService,
+		private systemAccountService: SystemAccountService,
+		private anonymousNoteService: AnonymousNoteService,
 	) {
 	}
 
@@ -90,8 +94,14 @@ export class ApRendererService {
 	}
 
 	@bindThis
-	public renderAnnounce(object: string | IObject, note: MiNote): IAnnounce {
-		const attributedTo = this.userEntityService.genLocalUserUri(note.userId);
+	public async renderAnnounce(object: string | IObject, note: MiNote): Promise<IAnnounce> {
+		let effectiveUserId = note.userId;
+		if (note.isAnonymous) {
+			const anonymousUser = await this.systemAccountService.fetch('anonymous');
+			effectiveUserId = anonymousUser.id;
+		}
+
+		const attributedTo = this.userEntityService.genLocalUserUri(effectiveUserId);
 
 		let to: string[] = [];
 		let cc: string[] = [];
@@ -111,7 +121,7 @@ export class ApRendererService {
 
 		return {
 			id: `${this.config.url}/notes/${note.id}/activity`,
-			actor: this.userEntityService.genLocalUserUri(note.userId),
+			actor: this.userEntityService.genLocalUserUri(effectiveUserId),
 			type: 'Announce',
 			published: this.idService.parse(note.id).date.toISOString(),
 			to,
@@ -140,10 +150,16 @@ export class ApRendererService {
 	}
 
 	@bindThis
-	public renderCreate(object: IObject, note: MiNote): ICreate {
+	public async renderCreate(object: IObject, note: MiNote): Promise<ICreate> {
+		let effectiveUserId = note.userId;
+		if (note.isAnonymous) {
+			const anonymousUser = await this.systemAccountService.fetch('anonymous');
+			effectiveUserId = anonymousUser.id;
+		}
+
 		const activity: ICreate = {
 			id: `${this.config.url}/notes/${note.id}/activity`,
-			actor: this.userEntityService.genLocalUserUri(note.userId),
+			actor: this.userEntityService.genLocalUserUri(effectiveUserId),
 			type: 'Create',
 			published: this.idService.parse(note.id).date.toISOString(),
 			object,
@@ -395,7 +411,14 @@ export class ApRendererService {
 			}
 		}
 
-		const attributedTo = this.userEntityService.genLocalUserUri(note.userId);
+		const originalAttributedTo = this.userEntityService.genLocalUserUri(note.userId);
+
+		// For anonymous notes, replace attributedTo with anonymous system user
+		let attributedTo = originalAttributedTo;
+		if (note.isAnonymous) {
+			const anonymousUser = await this.systemAccountService.fetch('anonymous');
+			attributedTo = this.userEntityService.genLocalUserUri(anonymousUser.id);
+		}
 
 		const mentions = (JSON.parse(note.mentionedRemoteUsers) as IMentionedRemoteUsers).map(x => x.uri);
 
@@ -489,6 +512,7 @@ export class ApRendererService {
 			sensitive: note.cw != null || files.some(file => file.isSensitive),
 			tag,
 			...asPoll,
+			...(note.isAnonymous ? { _anonkey_anonymous: true } : {}),
 		};
 	}
 

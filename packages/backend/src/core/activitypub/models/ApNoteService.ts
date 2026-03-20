@@ -329,6 +329,7 @@ export class ApNoteService {
 				poll,
 				uri: note.id,
 				url: url,
+				isAnonymous: note._anonkey_anonymous === true,
 			}, silent);
 		} catch (err: any) {
 			if (err.name !== 'duplicated') {

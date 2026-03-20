@@ -200,6 +200,11 @@ export class MiNote {
 	})
 	public hasPoll: boolean;
 
+	@Column('boolean', {
+		default: false,
+	})
+	public isAnonymous: boolean;
+
 	@Index()
 	@Column({
 		...id(),

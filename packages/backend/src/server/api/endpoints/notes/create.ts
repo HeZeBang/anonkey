@@ -123,6 +123,12 @@ export const meta = {
 			code: 'CONTAINS_TOO_MANY_MENTIONS',
 			id: '4de0363a-3046-481b-9b0f-feff3e211025',
 		},
+
+		cannotPostAnonymous: {
+			message: 'You are not allowed to post anonymously.',
+			code: 'CANNOT_POST_ANONYMOUS',
+			id: 'a3c9f5e4-7b2d-4e1a-8f6c-3d5e8a9b2c1d',
+		},
 	},
 } as const;
 
@@ -139,6 +145,7 @@ export const paramDef = {
 		noExtractMentions: { type: 'boolean', default: false },
 		noExtractHashtags: { type: 'boolean', default: false },
 		noExtractEmojis: { type: 'boolean', default: false },
+		isAnonymous: { type: 'boolean', default: false },
 		replyId: { type: 'string', format: 'misskey:id', nullable: true },
 		renoteId: { type: 'string', format: 'misskey:id', nullable: true },
 		channelId: { type: 'string', format: 'misskey:id', nullable: true },
@@ -238,6 +245,7 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 					visibility: ps.visibility,
 					visibleUserIds: ps.visibleUserIds ?? [],
 					channelId: ps.channelId ?? null,
+					isAnonymous: ps.isAnonymous,
 					apMentions: ps.noExtractMentions ? [] : undefined,
 					apHashtags: ps.noExtractHashtags ? [] : undefined,
 					apEmojis: ps.noExtractEmojis ? [] : undefined,
@@ -283,6 +291,8 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 						throw new ApiError(meta.errors.cannotCreateAlreadyExpiredPoll);
 					} else if (err.id === 'bfa3905b-25f5-4894-b430-da331a490e4b') {
 						throw new ApiError(meta.errors.noSuchChannel);
+					} else if (err.id === 'a3c9f5e4-7b2d-4e1a-8f6c-3d5e8a9b2c1d') {
+						throw new ApiError(meta.errors.cannotPostAnonymous);
 					}
 				}
 				throw err;

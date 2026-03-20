@@ -20,7 +20,7 @@ import { generateNativeUserToken } from '@/misc/token.js';
 import { IdService } from '@/core/IdService.js';
 import { genRsaKeyPair } from '@/misc/gen-key-pair.js';
 
-export const SYSTEM_ACCOUNT_TYPES = ['actor', 'relay', 'proxy'] as const;
+export const SYSTEM_ACCOUNT_TYPES = ['actor', 'relay', 'proxy', 'anonymous'] as const;
 
 @Injectable()
 export class SystemAccountService implements OnApplicationShutdown {

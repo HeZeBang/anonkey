@@ -213,6 +213,10 @@ export default class extends Endpoint<typeof meta, typeof paramDef> { // eslint-
 			excludeUserFromMute: ps.userId,
 		});
 
+		if (!me || me.id !== ps.userId) {
+			this.queryService.applyAnonymousFilter(query, me);
+		}
+
 		if (ps.withFiles) {
 			query.andWhere('note.fileIds != \'{}\'');
 		}

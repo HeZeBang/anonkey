@@ -8070,6 +8070,10 @@ export interface Locale extends ILocale {
              */
             "canPublicNote": string;
             /**
+             * 匿名投稿の許可
+             */
+            "canPostAnonymous": string;
+            /**
              * ノート内の最大メンション数
              */
             "mentionMax": string;
@@ -13258,4 +13262,20 @@ export interface Locale extends ILocale {
          */
         "mfm": string;
     };
+    /**
+     * 匿名モードオン
+     */
+    "anonymousOn": string;
+    /**
+     * 匿名モードオフ
+     */
+    "anonymousOff": string;
+    /**
+     * 匿名投稿
+     */
+    "anonymousPost": string;
+    /**
+     * 匿名
+     */
+    "anonymousUser": string;
 }

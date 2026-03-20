@@ -2071,6 +2071,7 @@ _role:
     gtlAvailable: "Can view the global timeline"
     ltlAvailable: "Can view the local timeline"
     canPublicNote: "Can send public notes"
+    canPostAnonymous: "Can post anonymously"
     mentionMax: "Maximum number of mentions in a note"
     canInvite: "Can create instance invite codes"
     inviteLimit: "Invite limit"
@@ -3441,3 +3442,8 @@ _qr:
   scanFile: "Scan image from device"
   raw: "Text"
   mfm: "MFM"
+
+anonymousOn: "Anonymous mode on"
+anonymousOff: "Anonymous mode off"
+anonymousPost: "Anonymous post"
+anonymousUser: "Anonymous"

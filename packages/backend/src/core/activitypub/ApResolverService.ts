@@ -157,7 +157,7 @@ export class Resolver {
 					.then(async note => {
 						if (parsed.rest === 'activity') {
 							// this refers to the create activity and not the note itself
-							return this.apRendererService.addContext(this.apRendererService.renderCreate(await this.apRendererService.renderNote(note), note));
+							return this.apRendererService.addContext(await this.apRendererService.renderCreate(await this.apRendererService.renderNote(note), note));
 						} else {
 							return this.apRendererService.renderNote(note);
 						}

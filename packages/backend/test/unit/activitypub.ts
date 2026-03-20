@@ -272,8 +272,8 @@ describe('ActivityPub', () => {
 	});
 
 	describe('Renderer', () => {
-		test('Render an announce with visibility: followers', () => {
-			rendererService.renderAnnounce('https://example.com/notes/00example', {
+		test('Render an announce with visibility: followers', async () => {
+			await rendererService.renderAnnounce('https://example.com/notes/00example', {
 				id: genAidx(Date.now()),
 				visibility: 'followers',
 			} as MiNote);

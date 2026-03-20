@@ -21,6 +21,7 @@ import { CacheService } from '@/core/CacheService.js';
 import type { OnModuleInit } from '@nestjs/common';
 import type { CustomEmojiService } from '../CustomEmojiService.js';
 import type { ReactionService } from '../ReactionService.js';
+import type { AnonymousNoteService } from '../AnonymousNoteService.js';
 import type { UserEntityService } from './UserEntityService.js';
 import type { DriveFileEntityService } from './DriveFileEntityService.js';
 
@@ -68,6 +69,7 @@ export class NoteEntityService implements OnModuleInit {
 	private reactionsBufferingService: ReactionsBufferingService;
 	private idService: IdService;
 	private cacheService: CacheService;
+	private anonymousNoteService: AnonymousNoteService;
 	private noteLoader = new DebounceLoader(this.findNoteOrFail);
 
 	constructor(
@@ -115,6 +117,7 @@ export class NoteEntityService implements OnModuleInit {
 		this.reactionsBufferingService = this.moduleRef.get('ReactionsBufferingService');
 		this.idService = this.moduleRef.get('IdService');
 		this.cacheService = this.moduleRef.get('CacheService');
+		this.anonymousNoteService = this.moduleRef.get('AnonymousNoteService');
 	}
 
 	@bindThis
@@ -459,6 +462,33 @@ export class NoteEntityService implements OnModuleInit {
 				} : {}),
 			} : {}),
 		});
+
+		// Anonymize anonymous notes
+		if (note.isAnonymous) {
+			packed.isAnonymous = true;
+
+			// Compute thread identity index
+			const threadId = note.threadId ?? note.id;
+			const { anonymousIndex } = await this.anonymousNoteService.getOrAssignThreadIdentity(note.userId, threadId);
+			packed._anonkey_anonymous = { threadIdentityIndex: anonymousIndex };
+
+			const isPrivileged = await this.anonymousNoteService.isViewerPrivileged(note.userId, meId);
+
+			if (!isPrivileged) {
+				// Replace identity with anonymous system user
+				const anonymousUser = await this.anonymousNoteService.getAnonymousUser();
+				packed.userId = anonymousUser.id;
+				packed.user = await this.userEntityService.pack(anonymousUser, me);
+
+				// Strip file ownership to prevent deanonymization via file metadata
+				if (packed.files) {
+					for (const file of packed.files) {
+						file.userId = null;
+						file.user = null;
+					}
+				}
+			}
+		}
 
 		this.treatVisibility(packed);
 

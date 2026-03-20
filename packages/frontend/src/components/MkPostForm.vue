@@ -36,6 +36,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<span v-if="!localOnly"><i class="ti ti-rocket"></i></span>
 				<span v-else><i class="ti ti-rocket-off"></i></span>
 			</button>
+			<button v-tooltip="isAnonymous ? i18n.ts.anonymousOn : i18n.ts.anonymousOff" class="_button" :class="[$style.headerRightItem, { [$style.active]: isAnonymous }]" @click="isAnonymous = !isAnonymous">
+				<i :class="isAnonymous ? 'ti ti-spy' : 'ti ti-spy-off'"></i>
+			</button>
 			<button ref="otherSettingsButton" v-tooltip="i18n.ts.other" class="_button" :class="$style.headerRightItem" @click="showOtherSettings"><i class="ti ti-dots"></i></button>
 			<button ref="submitButtonEl" v-click-anime class="_button" :class="$style.submit" :disabled="!canPost" data-cy-open-post-form-submit @click="post">
 				<div :class="$style.submitInner">
@@ -217,6 +220,7 @@ const quoteId = ref<string | null>(null);
 const hasNotSpecifiedMentions = ref(false);
 const recentHashtags = ref(JSON.parse(miLocalStorage.getItem('hashtags') ?? '[]'));
 const imeText = ref('');
+const isAnonymous = ref(false);
 const showingOptions = ref(false);
 const textAreaReadOnly = ref(false);
 const justEndedComposition = ref(false);
@@ -1030,6 +1034,7 @@ async function post(ev?: PointerEvent) {
 		visibility: visibility.value,
 		visibleUserIds: visibility.value === 'specified' ? visibleUsers.value.map(u => u.id) : undefined,
 		reactionAcceptance: reactionAcceptance.value,
+		isAnonymous: isAnonymous.value,
 	};
 
 	if (withHashtags.value && hashtags.value && hashtags.value.trim() !== '') {
@@ -1623,6 +1628,10 @@ defineExpose({
 
 	&.danger {
 		color: #ff2a2a;
+	}
+
+	&.active {
+		color: var(--MI_THEME-accent);
 	}
 }
 

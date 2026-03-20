@@ -47,7 +47,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 	</div>
 	<article v-else :class="$style.article" @contextmenu.stop="onContextmenu">
 		<div v-if="appearNote.channel" :class="$style.colorBar" :style="{ background: appearNote.channel.color }"></div>
-		<MkAvatar :class="[$style.avatar, prefer.s.useStickyIcons ? $style.useSticky : null]" :user="appearNote.user" :link="!mock" :preview="!mock"/>
+		<div :class="$style.avatarContainer">
+			<MkAvatar :class="[$style.avatar, prefer.s.useStickyIcons ? $style.useSticky : null]" :user="appearNote.user" :link="!mock" :preview="!mock"/>
+			<div v-if="(appearNote as any).isAnonymous && appearNote.userId === $i?.id" :class="$style.anonymousSelfBadge" :title="i18n.ts.anonymousPost"><i class="ti ti-spy"></i></div>
+		</div>
 		<div :class="$style.main">
 			<MkNoteHeader :note="appearNote" :mini="true"/>
 			<MkInstanceTicker v-if="showTicker" :host="appearNote.user.host" :instance="appearNote.user.instance"/>
@@ -896,10 +899,16 @@ function emitUpdReaction(emoji: string, delta: number) {
 	pointer-events: none;
 }
 
-.avatar {
+.avatarContainer {
 	flex-shrink: 0;
-	display: block !important;
+	position: relative;
 	margin: 0 14px 0 0;
+	width: 58px;
+	height: 58px;
+}
+
+.avatar {
+	display: block !important;
 	width: 58px;
 	height: 58px;
 
@@ -908,6 +917,20 @@ function emitUpdReaction(emoji: string, delta: number) {
 		top: calc(22px + var(--MI-stickyTop, 0px));
 		left: 0;
 	}
+}
+
+.anonymousSelfBadge {
+	position: absolute;
+	bottom: -2px;
+	right: -6px;
+	z-index: 1;
+	font-size: 0.7em;
+	color: var(--MI_THEME-accent);
+	background: var(--MI_THEME-panel);
+	border: solid 1px var(--MI_THEME-divider);
+	border-radius: 50%;
+	padding: 2px;
+	line-height: 1;
 }
 
 .main {
@@ -1045,6 +1068,10 @@ function emitUpdReaction(emoji: string, delta: number) {
 		padding: 24px 26px;
 	}
 
+	.avatarContainer {
+		width: 50px;
+	}
+
 	.avatar {
 		width: 50px;
 		height: 50px;
@@ -1089,8 +1116,12 @@ function emitUpdReaction(emoji: string, delta: number) {
 }
 
 @container (max-width: 450px) {
-	.avatar {
+	.avatarContainer {
 		margin: 0 10px 0 0;
+		width: 46px;
+	}
+
+	.avatar {
 		width: 46px;
 		height: 46px;
 
@@ -1128,6 +1159,10 @@ function emitUpdReaction(emoji: string, delta: number) {
 }
 
 @container (max-width: 300px) {
+	.avatarContainer {
+		width: 44px;
+	}
+
 	.avatar {
 		width: 44px;
 		height: 44px;

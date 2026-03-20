@@ -99,10 +99,10 @@ export class ActivityPubServerService {
 	private async packActivity(note: MiNote): Promise<any> {
 		if (isRenote(note) && !isQuote(note)) {
 			const renote = await this.notesRepository.findOneByOrFail({ id: note.renoteId });
-			return this.apRendererService.renderAnnounce(renote.uri ? renote.uri : `${this.config.url}/notes/${renote.id}`, note);
+			return await this.apRendererService.renderAnnounce(renote.uri ? renote.uri : `${this.config.url}/notes/${renote.id}`, note);
 		}
 
-		return this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
+		return await this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
 	}
 
 	@bindThis

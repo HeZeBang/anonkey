@@ -376,4 +376,18 @@ export class QueryService {
 				.andWhere(brakets('renoteUser'));
 		}
 	}
+
+	@bindThis
+	public applyAnonymousFilter(q: SelectQueryBuilder<any>, me: { id: MiUser['id'] } | null): void {
+		// When querying a specific user's notes, hide their anonymous notes from others
+		// This is applied in endpoints like users/notes
+		if (me) {
+			q.andWhere(new Brackets(qb => {
+				qb.where('note.isAnonymous = false')
+					.orWhere('note.userId = :anonFilterMeId', { anonFilterMeId: me.id });
+			}));
+		} else {
+			q.andWhere('note.isAnonymous = false');
+		}
+	}
 }

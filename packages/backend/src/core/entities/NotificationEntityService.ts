@@ -20,6 +20,7 @@ import { ChatEntityService } from './ChatEntityService.js';
 import type { OnModuleInit } from '@nestjs/common';
 import type { UserEntityService } from './UserEntityService.js';
 import type { NoteEntityService } from './NoteEntityService.js';
+import type { AnonymousNoteService } from '@/core/AnonymousNoteService.js';
 
 const NOTE_REQUIRED_NOTIFICATION_TYPES = new Set([
 	'note',
@@ -40,6 +41,7 @@ export class NotificationEntityService implements OnModuleInit {
 	private noteEntityService: NoteEntityService;
 	private roleEntityService: RoleEntityService;
 	private chatEntityService: ChatEntityService;
+	private anonymousNoteService: AnonymousNoteService;
 
 	constructor(
 		private moduleRef: ModuleRef,
@@ -62,6 +64,7 @@ export class NotificationEntityService implements OnModuleInit {
 		this.noteEntityService = this.moduleRef.get('NoteEntityService');
 		this.roleEntityService = this.moduleRef.get('RoleEntityService');
 		this.chatEntityService = this.moduleRef.get('ChatEntityService');
+		this.anonymousNoteService = this.moduleRef.get('AnonymousNoteService');
 	}
 
 	/**
@@ -163,12 +166,26 @@ export class NotificationEntityService implements OnModuleInit {
 			return null;
 		}
 
+		// Defense in depth: if the notification is associated with an anonymous note,
+		// replace the notifier identity with the anonymous system user
+		let effectiveNotifierId = 'notifierId' in notification ? notification.notifierId : undefined;
+		let effectiveUserIfNeed = userIfNeed;
+
+		if (noteIfNeed != null && effectiveNotifierId) {
+			const resolvedNote = await noteIfNeed;
+			if (resolvedNote && (resolvedNote as any).isAnonymous) {
+				const anonymousUser = await this.anonymousNoteService.getAnonymousUser();
+				effectiveNotifierId = anonymousUser.id;
+				effectiveUserIfNeed = await this.userEntityService.pack(anonymousUser, { id: meId });
+			}
+		}
+
 		return await awaitAll({
 			id: notification.id,
 			createdAt: new Date(notification.createdAt).toISOString(),
 			type: notification.type,
-			userId: 'notifierId' in notification ? notification.notifierId : undefined,
-			...(userIfNeed != null ? { user: userIfNeed } : {}),
+			userId: effectiveNotifierId,
+			...(effectiveUserIfNeed != null ? { user: effectiveUserIfNeed } : {}),
 			...(noteIfNeed != null ? { note: noteIfNeed } : {}),
 			...(notification.type === 'reaction' ? {
 				reaction: notification.reaction,

@@ -153,7 +153,7 @@ export class SearchService {
 		await this.meilisearchNoteIndex?.addDocuments([{
 			id: note.id,
 			createdAt: this.idService.parse(note.id).date.getTime(),
-			userId: note.userId,
+			userId: note.isAnonymous ? null : note.userId,
 			userHost: note.userHost,
 			channelId: note.channelId,
 			cw: note.cw,
@@ -207,6 +207,10 @@ export class SearchService {
 
 		if (opts.userId) {
 			query.andWhere('note.userId = :userId', { userId: opts.userId });
+			// Exclude anonymous notes when searching by userId (prevent correlation)
+			if (!me || me.id !== opts.userId) {
+				query.andWhere('note.isAnonymous = false');
+			}
 		} else if (opts.channelId) {
 			query.andWhere('note.channelId = :channelId', { channelId: opts.channelId });
 		}

@@ -57,6 +57,7 @@ import { IdentifiableError } from '@/misc/identifiable-error.js';
 import { CollapsedQueue } from '@/misc/collapsed-queue.js';
 import { CacheService } from '@/core/CacheService.js';
 import { isQuote, isRenote } from '@/misc/is-renote.js';
+import { AnonymousNoteService } from '@/core/AnonymousNoteService.js';
 
 type NotificationType = 'reply' | 'renote' | 'quote' | 'mention';
 
@@ -143,6 +144,7 @@ type Option = {
 	uri?: string | null;
 	url?: string | null;
 	app?: MiApp | null;
+	isAnonymous?: boolean;
 };
 
 @Injectable()
@@ -224,6 +226,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		private utilityService: UtilityService,
 		private userBlockingService: UserBlockingService,
 		private cacheService: CacheService,
+		private anonymousNoteService: AnonymousNoteService,
 	) {
 		this.updateNotesCountQueue = new CollapsedQueue(process.env.NODE_ENV !== 'test' ? 60 * 1000 * 5 : 0, this.collapseNotesCount, this.performUpdateNotesCount);
 	}
@@ -248,6 +251,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 		localOnly: boolean;
 		reactionAcceptance: MiNote['reactionAcceptance'];
 		poll: IPoll | null;
+		isAnonymous: boolean;
 		apMentions?: MinimumUser[] | null;
 		apHashtags?: string[] | null;
 		apEmojis?: string[] | null;
@@ -383,6 +387,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			visibility: data.visibility,
 			visibleUsers,
 			channel,
+			isAnonymous: data.isAnonymous,
 			apMentions: data.apMentions,
 			apHashtags: data.apHashtags,
 			apEmojis: data.apEmojis,
@@ -426,6 +431,13 @@ export class NoteCreateService implements OnApplicationShutdown {
 				data.visibility = 'home';
 			} else if ((await this.roleService.getUserPolicies(user.id)).canPublicNote === false) {
 				data.visibility = 'home';
+			}
+		}
+
+		if (data.isAnonymous) {
+			const policies = await this.roleService.getUserPolicies(user.id);
+			if (!policies.canPostAnonymous) {
+				throw new IdentifiableError('a3c9f5e4-7b2d-4e1a-8f6c-3d5e8a9b2c1d', 'You are not allowed to post anonymously');
 			}
 		}
 
@@ -584,6 +596,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			name: data.name,
 			text: data.text,
 			hasPoll: data.poll != null,
+			isAnonymous: data.isAnonymous ?? false,
 			cw: data.cw ?? null,
 			tags: tags.map(tag => normalizeForSearch(tag)),
 			emojis,
@@ -714,7 +727,7 @@ export class NoteCreateService implements OnApplicationShutdown {
 			this.saveReply(data.reply, note);
 		}
 
-		if (data.reply == null) {
+		if (data.reply == null && !data.isAnonymous) {
 			// TODO: キャッシュ
 			this.followingsRepository.findBy({
 				followeeId: user.id,
@@ -772,7 +785,10 @@ export class NoteCreateService implements OnApplicationShutdown {
 
 			this.webhookService.enqueueUserWebhook(user.id, 'note', { note: noteObj });
 
-			const nm = new NotificationManager(this.mutingsRepository, this.notificationService, user, note);
+			const notifier = data.isAnonymous
+				? await this.anonymousNoteService.getAnonymousUser()
+				: user;
+			const nm = new NotificationManager(this.mutingsRepository, this.notificationService, notifier, note);
 
 			await this.createMentionedEvents(mentionedUsers, note, nm);
 
@@ -817,32 +833,41 @@ export class NoteCreateService implements OnApplicationShutdown {
 			if (!data.localOnly && this.userEntityService.isLocalUser(user)) {
 				(async () => {
 					const noteActivity = await this.renderNoteOrRenoteActivity(data, note);
-					const dm = this.apDeliverManagerService.createDeliverManager(user, noteActivity);
 
-					// メンションされたリモートユーザーに配送
-					for (const u of mentionedUsers.filter(u => this.userEntityService.isRemoteUser(u))) {
-						dm.addDirectRecipe(u as MiRemoteUser);
-					}
+					// For anonymous notes, use the anonymous system user for delivery
+					const deliverUser = data.isAnonymous
+						? await this.anonymousNoteService.getAnonymousUser()
+						: user;
 
-					// 投稿がリプライかつ投稿者がローカルユーザーかつリプライ先の投稿の投稿者がリモートユーザーなら配送
-					if (data.reply && data.reply.userHost !== null) {
-						const u = await this.usersRepository.findOneBy({ id: data.reply.userId });
-						if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
-					}
+					const dm = this.apDeliverManagerService.createDeliverManager(deliverUser, noteActivity);
 
-					// 投稿がRenoteかつ投稿者がローカルユーザーかつRenote元の投稿の投稿者がリモートユーザーなら配送
-					if (data.renote && data.renote.userHost !== null) {
-						const u = await this.usersRepository.findOneBy({ id: data.renote.userId });
-						if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
-					}
+					if (!data.isAnonymous) {
+						// Only deliver to mentioned users, reply/renote targets for non-anonymous notes
+						// メンションされたリモートユーザーに配送
+						for (const u of mentionedUsers.filter(u => this.userEntityService.isRemoteUser(u))) {
+							dm.addDirectRecipe(u as MiRemoteUser);
+						}
 
-					// フォロワーに配送
-					if (['public', 'home', 'followers'].includes(note.visibility)) {
-						dm.addFollowersRecipe();
+						// 投稿がリプライかつ投稿者がローカルユーザーかつリプライ先の投稿の投稿者がリモートユーザーなら配送
+						if (data.reply && data.reply.userHost !== null) {
+							const u = await this.usersRepository.findOneBy({ id: data.reply.userId });
+							if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
+						}
+
+						// 投稿がRenoteかつ投稿者がローカルユーザーかつRenote元の投稿の投稿者がリモートユーザーなら配送
+						if (data.renote && data.renote.userHost !== null) {
+							const u = await this.usersRepository.findOneBy({ id: data.renote.userId });
+							if (u && this.userEntityService.isRemoteUser(u)) dm.addDirectRecipe(u);
+						}
+
+						// フォロワーに配送
+						if (['public', 'home', 'followers'].includes(note.visibility)) {
+							dm.addFollowersRecipe();
+						}
 					}
 
 					if (['public'].includes(note.visibility)) {
-						this.relayService.deliverToRelays(user, noteActivity);
+						this.relayService.deliverToRelays(deliverUser, noteActivity);
 					}
 
 					trackPromise(dm.execute());
@@ -950,8 +975,8 @@ export class NoteCreateService implements OnApplicationShutdown {
 		if (data.localOnly) return null;
 
 		const content = this.isRenote(data) && !this.isQuote(data)
-			? this.apRendererService.renderAnnounce(data.renote.uri ? data.renote.uri : `${this.config.url}/notes/${data.renote.id}`, note)
-			: this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
+			? await this.apRendererService.renderAnnounce(data.renote.uri ? data.renote.uri : `${this.config.url}/notes/${data.renote.id}`, note)
+			: await this.apRendererService.renderCreate(await this.apRendererService.renderNote(note, false), note);
 
 		return this.apRendererService.addContext(content);
 	}

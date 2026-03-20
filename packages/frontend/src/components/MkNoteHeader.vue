@@ -12,6 +12,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 		<MkUserName :user="note.user"/>
 	</MkA>
 	<div v-if="note.user.isBot" :class="$style.isBot">bot</div>
+	<div v-if="(note as any).isAnonymous" :class="$style.isAnonymous"><i class="ti ti-spy"></i> {{ (note as any)._anonkey_anonymous?.threadIdentityIndex != null && note.replyId != null ? `${i18n.ts.anonymousUser} #${(note as any)._anonkey_anonymous.threadIdentityIndex}` : i18n.ts.anonymousPost }}</div>
 	<div :class="$style.username"><MkAcct :user="note.user"/></div>
 	<div v-if="note.user.badgeRoles" :class="$style.badgeRoles">
 		<img v-for="(role, i) in note.user.badgeRoles" :key="i" v-tooltip="role.name" :class="$style.badgeRole" :src="role.iconUrl!"/>
@@ -80,6 +81,17 @@ const mock = inject(DI.mock, false);
 	font-size: 80%;
 	border: solid 0.5px var(--MI_THEME-divider);
 	border-radius: 3px;
+}
+
+.isAnonymous {
+	flex-shrink: 0;
+	align-self: center;
+	margin: 0 .5em 0 0;
+	padding: 1px 6px;
+	font-size: 80%;
+	border: solid 0.5px var(--MI_THEME-accent);
+	border-radius: 3px;
+	color: var(--MI_THEME-accent);
 }
 
 .username {

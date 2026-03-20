@@ -265,5 +265,19 @@ export const packedNoteSchema = {
 			type: 'string',
 			optional: true, nullable: true,
 		},
+		isAnonymous: {
+			type: 'boolean',
+			optional: true, nullable: false,
+		},
+		_anonkey_anonymous: {
+			type: 'object',
+			optional: true, nullable: false,
+			properties: {
+				threadIdentityIndex: {
+					type: 'number',
+					optional: false, nullable: false,
+				},
+			},
+		},
 	},
 } as const;
