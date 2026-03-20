@@ -4477,6 +4477,10 @@ export type components = {
             clippedCount?: number;
             hasPoll?: boolean;
             myReaction?: string | null;
+            isAnonymous?: boolean;
+            _anonkey_anonymous?: {
+                threadIdentityIndex: number;
+            };
         };
         NoteDraft: {
             /**
@@ -9416,6 +9420,7 @@ export interface operations {
                         prohibitedWords: string[];
                         prohibitedWordsForNameOfUser: string[];
                         bannedEmailDomains?: string[];
+                        allowedEmailRegexp: string;
                         preservedUsernames: string[];
                         hcaptchaSecretKey: string | null;
                         mcaptchaSecretKey: string | null;
@@ -12809,6 +12814,7 @@ export interface operations {
                     enableIdenticonGeneration?: boolean;
                     serverRules?: string[];
                     bannedEmailDomains?: string[];
+                    allowedEmailRegexp?: string;
                     preservedUsernames?: string[];
                     manifestJsonOverride?: string;
                     enableFanoutTimeline?: boolean;
@@ -29236,6 +29242,8 @@ export interface operations {
                     noExtractHashtags?: boolean;
                     /** @default false */
                     noExtractEmojis?: boolean;
+                    /** @default false */
+                    isAnonymous?: boolean;
                     /** Format: misskey:id */
                     replyId?: string | null;
                     /** Format: misskey:id */
