@@ -36,7 +36,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 				<span v-if="!localOnly"><i class="ti ti-rocket"></i></span>
 				<span v-else><i class="ti ti-rocket-off"></i></span>
 			</button>
-			<button v-tooltip="isAnonymous ? i18n.ts.anonymousOn : i18n.ts.anonymousOff" class="_button" :class="[$style.headerRightItem, { [$style.active]: isAnonymous }]" @click="isAnonymous = !isAnonymous">
+			<button v-tooltip="$i.policies.canPostAnonymous ? (isAnonymous ? i18n.ts.anonymousOn : i18n.ts.anonymousOff) : i18n.ts.anonymousOff" class="_button" :class="[$style.headerRightItem, { [$style.active]: isAnonymous, [$style.disabled]: !$i.policies.canPostAnonymous }]" :disabled="!$i.policies.canPostAnonymous" @click="isAnonymous = !isAnonymous">
 				<i :class="isAnonymous ? 'ti ti-spy' : 'ti ti-spy-off'"></i>
 			</button>
 			<button ref="otherSettingsButton" v-tooltip="i18n.ts.other" class="_button" :class="$style.headerRightItem" @click="showOtherSettings"><i class="ti ti-dots"></i></button>
@@ -1632,6 +1632,11 @@ defineExpose({
 
 	&.active {
 		color: var(--MI_THEME-accent);
+	}
+
+	&.disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 }
 

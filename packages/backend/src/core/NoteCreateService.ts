@@ -714,7 +714,10 @@ export class NoteCreateService implements OnApplicationShutdown {
 		}
 
 		// Increment notes count (user)
-		this.incNotesCountOfUser(user);
+		// For anonymous notes, do not increment the real user's count to prevent side-channel correlation
+		if (!data.isAnonymous) {
+			this.incNotesCountOfUser(user);
+		}
 
 		this.pushToTl(note, user);
 
