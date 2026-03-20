@@ -1,0 +1,122 @@
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Misskey configuration (Kubernetes production)
+#━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+#   ┌─────┐
+#───┘ URL └─────────────────────────────────────────────────────
+
+# Final accessible URL seen by a user.
+# ONCE YOU HAVE STARTED THE INSTANCE, DO NOT CHANGE THE
+# URL SETTINGS AFTER THAT!
+url: 'https://example.tld/'
+
+#   ┌───────────────────────┐
+#───┘ Port and TLS settings └───────────────────────────────────
+
+port: 3000
+
+#   ┌──────────────────────────┐
+#───┘ PostgreSQL configuration └────────────────────────────────
+
+db:
+  # k8s Service name for PostgreSQL
+  host: postgres
+  port: 5432
+  db: misskey
+  user: misskey
+  # This value must match POSTGRES_PASSWORD in secrets.env
+  pass: REPLACE_ME
+
+dbReplications: false
+
+#   ┌─────────────────────┐
+#───┘ Redis configuration └─────────────────────────────────────
+
+redis:
+  # k8s Service name for Redis
+  host: redis
+  port: 6379
+
+#redisForPubsub:
+#  host: redis
+#  port: 6379
+
+#redisForJobQueue:
+#  host: redis
+#  port: 6379
+
+#redisForTimelines:
+#  host: redis
+#  port: 6379
+
+#redisForReactions:
+#  host: redis
+#  port: 6379
+
+#   ┌───────────────────────────────┐
+#───┘ Fulltext search configuration └───────────────────────────
+
+fulltextSearch:
+  provider: meilisearch
+
+meilisearch:
+  # k8s Service name for Meilisearch
+  host: meilisearch
+  port: 7700
+  # This value must match MEILI_MASTER_KEY in secrets.env
+  apiKey: 'REPLACE_ME'
+  ssl: false
+  index: misskey_notes
+  scope: local
+
+#   ┌───────────────┐
+#───┘ ID generation └───────────────────────────────────────────
+
+# ONCE YOU HAVE STARTED THE INSTANCE, DO NOT CHANGE THE
+# ID SETTINGS AFTER THAT!
+id: 'aidx'
+
+#   ┌────────────────┐
+#───┘ Error tracking └──────────────────────────────────────────
+
+#sentryForBackend:
+#  enableNodeProfiling: true
+#  options:
+#    dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0'
+
+#sentryForFrontend:
+#  options:
+#    dsn: 'https://examplePublicKey@o0.ingest.sentry.io/0'
+
+#   ┌─────────────────────┐
+#───┘ Other configuration └─────────────────────────────────────
+
+# Job concurrency per worker
+#deliverJobConcurrency: 128
+#inboxJobConcurrency: 16
+#relationshipJobConcurrency: 16
+
+# Job rate limiter
+#deliverJobPerSec: 128
+#inboxJobPerSec: 32
+
+# Job attempts
+#deliverJobMaxAttempts: 12
+#inboxJobMaxAttempts: 8
+
+#outgoingAddressFamily: ipv4
+
+proxyBypassHosts:
+  - api.deepl.com
+  - api-free.deepl.com
+  - www.recaptcha.net
+  - hcaptcha.com
+  - challenges.cloudflare.com
+
+# Trust pod network for reverse proxy headers
+allowedPrivateNetworks:
+  - '10.0.0.0/8'
+  - '172.16.0.0/12'
+  - '192.168.0.0/16'
+
+#maxFileSize: 262144000

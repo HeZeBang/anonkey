@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: misskey
+
+resources:
+  - namespace.yaml
+  - postgres/configmap.yaml
+  - postgres/statefulset.yaml
+  - postgres/service.yaml
+  - redis/deployment.yaml
+  - redis/service.yaml
+  - meilisearch/deployment.yaml
+  - meilisearch/service.yaml
+  - misskey/deployment.yaml
+  - misskey/service.yaml
+  - misskey/ingress.yaml
+  - misskey/hpa.yaml
+  - misskey/pdb.yaml
+  - misskey/networkpolicy.yaml
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: misskey
+      app.kubernetes.io/managed-by: kustomize
+    includeSelectors: false
